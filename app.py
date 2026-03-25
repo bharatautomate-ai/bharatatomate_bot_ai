@@ -1,21 +1,29 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 import sqlite3
 
 app = FastAPI()
 
-# ✅ Home route (browser test ke liye)
+# =========================
+# CONFIG
+# =========================
+VERIFY_TOKEN = "mytoken123"   # 👈 Meta webhook verify ke liye
+
+# =========================
+# HOME ROUTE
+# =========================
 @app.get("/")
 def home():
     return {"message": "Bot is LIVE 🚀"}
 
-# ✅ Chat API
+# =========================
+# CHAT BOT API
+# =========================
 @app.get("/chat")
 def chat(client_id: str, message: str):
 
     conn = sqlite3.connect("store.db")
     cursor = conn.cursor()
 
-    # products nikal
     cursor.execute("SELECT name, keywords, price, description FROM products WHERE client_id=?", (client_id,))
     products = cursor.fetchall()
 
@@ -32,7 +40,25 @@ def chat(client_id: str, message: str):
 
     return {"reply": "❌ Sorry, product nahi mila"}
 
-# ✅ Webhook test (future Instagram use)
+# =========================
+# INSTAGRAM WEBHOOK VERIFY
+# =========================
 @app.get("/webhook")
-def webhook():
-    return {"status": "Webhook working ✅"}
+def verify(mode: str = None, challenge: str = None, verify_token: str = None):
+
+    if verify_token == VERIFY_TOKEN:
+        return int(challenge) if challenge else "Verified"
+
+    return "Verification failed"
+
+# =========================
+# INSTAGRAM WEBHOOK RECEIVE
+# =========================
+@app.post("/webhook")
+async def receive_message(request: Request):
+
+    data = await request.json()
+
+    print("📩 Incoming:", data)
+
+    return {"status": "received"}
