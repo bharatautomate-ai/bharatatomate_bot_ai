@@ -6,20 +6,23 @@ from products import PRODUCTS
 
 app = FastAPI()
 
-VERIFY_TOKEN = os.getenv("mytoken123")
+VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
 PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN")
 @app.get("/")
 def home():
     return {"message": "Bot is LIVE 🚀"}
 
 
+from fastapi.responses import PlainTextResponse
+
 @app.get("/webhook")
 async def verify_webhook(request: Request):
-    if request.query_params.get("hub.verify_token") == VERIFY_TOKEN:
-        return int(request.query_params.get("hub.challenge"))
-    return {"error": "Verification failed"}
-
-
+    token = request.query_params.get("hub.verify_token")
+    challenge = request.query_params.get("hub.challenge")
+    
+    if token == VERIFY_TOKEN and challenge:
+        return PlainTextResponse(content=challenge, status_code=200)
+    return PlainTextResponse(content="Verification failed", status_code=403)
 @app.post("/webhook")
 async def receive_message(request: Request):
     data = await request.json()
