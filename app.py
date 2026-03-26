@@ -1,33 +1,26 @@
 from fastapi import FastAPI, Request
 import requests
+from difflib import get_close_matches
+from products import PRODUCTS
 
 app = FastAPI()
 
-# 🔐 CHANGE ONLY THESE 2 VALUES
 VERIFY_TOKEN = "mytoken123"
 PAGE_ACCESS_TOKEN = "EAAiIIUv6rFkBRN1qyteBlusRhTgvcEZAn7VkyVfkOik7V5ZAZAyVxYUSwbhY8qcdzwnn78gk24L4Tr8dU8ZBkyKqfZAc6xiiLEPLSMgB20FXHonwJtffofZADZC6WGnFXmWrCsknB9MiEuIo1yBdqMKH9U1qStvLfIdZAbTmYHSGQIPnZA8WStxo9uO3MWFC5QZBe0WBtWIwZDZD"
 
 
-# ✅ Health Check
 @app.get("/")
 def home():
     return {"message": "Bot is LIVE 🚀"}
 
 
-# ✅ Webhook Verification
 @app.get("/webhook")
 async def verify_webhook(request: Request):
-    mode = request.query_params.get("hub.mode")
-    token = request.query_params.get("hub.verify_token")
-    challenge = request.query_params.get("hub.challenge")
-
-    if mode == "subscribe" and token == VERIFY_TOKEN:
-        return int(challenge)
-
+    if request.query_params.get("hub.verify_token") == VERIFY_TOKEN:
+        return int(request.query_params.get("hub.challenge"))
     return {"error": "Verification failed"}
 
 
-# ✅ Receive Messages
 @app.post("/webhook")
 async def receive_message(request: Request):
     data = await request.json()
@@ -35,14 +28,16 @@ async def receive_message(request: Request):
     try:
         for entry in data.get("entry", []):
             for messaging in entry.get("messaging", []):
-                
+
                 sender_id = messaging["sender"]["id"]
 
                 if "message" in messaging and "text" in messaging["message"]:
                     user_msg = messaging["message"]["text"]
 
-                    reply = smart_reply(user_msg)
-                    send_message(sender_id, reply)
+                    reply = smart_ai_reply(user_msg)
+
+                    if reply:  # spam filter
+                        send_message(sender_id, reply)
 
     except Exception as e:
         print("Error:", e)
@@ -50,30 +45,55 @@ async def receive_message(request: Request):
     return {"status": "ok"}
 
 
-# 🧠 Smart Reply Logic (EDIT THIS FOR BUSINESS)
-def smart_reply(message):
+# 🔥 AI ENGINE
+def smart_ai_reply(message):
     msg = message.lower()
 
-    if "hoodie" in msg:
-        return "🛍️ Black Hoodie\n💰 Price: ₹1999\n📦 Free Delivery"
+    # ❌ SPAM FILTER
+    spam_words = ["beautiful", "sexy", "love you", "hot", "nice pic"]
+    if any(word in msg for word in spam_words):
+        return None
 
-    elif "hi" in msg or "hello" in msg:
-        return "🙏 Namaste! Aap kya dekhna chahte ho?\n\n1️⃣ Hoodie\n2️⃣ T-shirt\n3️⃣ Offers"
+    # ❤️ EMOJI REPLY
+    if any(emoji in msg for emoji in ["😍", "😘", "🥰", "❤️"]):
+        return "❤️ Thank you! Aap product dekhna chahte ho?\n\n1️⃣ Hoodie\n2️⃣ T-shirt\n3️⃣ Offers"
 
-    elif "price" in msg:
-        return "💰 Prices start from ₹499 only!"
+    # 👋 GREETING
+    if any(x in msg for x in ["hi", "hello", "hey", "kaise ho", "how are you"]):
+        return "😊 Namaste! Aap kya dekhna chahte ho?\n\n1️⃣ Hoodie\n2️⃣ T-shirt\n3️⃣ Offers"
 
-    else:
-        return "🙏 Thanks for messaging! Hum jaldi reply karenge."
+    # 🔍 PRODUCT MATCH (keyword + fuzzy)
+    for product in PRODUCTS:
+        for keyword in product["keywords"]:
+            if keyword in msg:
+                return format_product(product)
+
+    # fuzzy match
+    names = [p["name"].lower() for p in PRODUCTS]
+    match = get_close_matches(msg, names, n=1, cutoff=0.3)
+
+    if match:
+        for p in PRODUCTS:
+            if p["name"].lower() == match[0]:
+                return format_product(p)
+
+    return "🙏 Samajh nahi aaya\n\nTry: hoodie, tshirt"
 
 
-# 📤 Send Message to Instagram
+# 📦 PRODUCT FORMAT
+def format_product(p):
+    return f"""🛍️ {p['name']}
+💰 Price: {p['price']}
+📏 Sizes: {p['sizes']}
+📄 {p['description']}
+🚚 Free Delivery Available"""
+
+
+# 📤 SEND MESSAGE
 def send_message(recipient_id, message_text):
     url = "https://graph.facebook.com/v18.0/me/messages"
 
-    params = {
-        "access_token": PAGE_ACCESS_TOKEN
-    }
+    params = {"access_token": PAGE_ACCESS_TOKEN}
 
     payload = {
         "recipient": {"id": recipient_id},
