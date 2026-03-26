@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, Request
 import requests
 from difflib import get_close_matches
