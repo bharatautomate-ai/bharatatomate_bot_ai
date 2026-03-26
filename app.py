@@ -6,8 +6,8 @@ from products import PRODUCTS
 
 app = FastAPI()
 
-VERIFY_TOKEN = "mytoken123"
-PAGE_ACCESS_TOKEN = "IGAAjcPlazeFxBZAGJEZA3l4YjFOa0hhUXl1bFVBUjVUTm1NdFViQWlUMU95dkhkMlBpMmZAuUWRnTmNMSElQMXlRdFZAtZAzduNmZAOUkVsdVZABWE5iamRsdUJOYXNBaHkxcERKVHdScFZAGWXBNRHJ3Ynk4UmVCNWJWMkZA2UVZAaNUpncwZDZD"
+VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
+PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN")
 @app.get("/")
 def home():
     return {"message": "Bot is LIVE 🚀"}
