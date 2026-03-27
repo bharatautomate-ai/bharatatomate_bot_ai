@@ -1,4 +1,4 @@
-import os
+
 from fastapi import FastAPI, Request
 import requests
 from difflib import get_close_matches
@@ -6,8 +6,8 @@ from products import PRODUCTS
 
 app = FastAPI()
 
-VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
-PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN")
+VERIFY_TOKEN = "mytoken123"
+PAGE_ACCESS_TOKEN =("EAAiIIUv6rFkBRAykdp0PJJIbA0prHZCgelQsrpafdnow0k2Nxf1HWfNUFtl3HmMKkkKzwATajdMDXheUWDzokMwtelv6wdebnXuDoZC0XS2HBOon9JVBAJfWhRlHDZCxlWr7X7NGHDSrCWVAaRZBJ0IrulZCAiaqlYLe0WV1mrqtbUdMfVQZCof9FR3gqGHzLTZBgdJlQZDZD")
 @app.get("/")
 def home():
     return {"message": "Bot is LIVE 🚀"}
