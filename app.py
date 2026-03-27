@@ -6,7 +6,7 @@ from products import PRODUCTS
 
 app = FastAPI()
 
-VERIFY_TOKEN = ("mytoken123")
+VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
 PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN")
 @app.get("/")
 def home():
